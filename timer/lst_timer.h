@@ -24,8 +24,10 @@
 #include <time.h>
 #include "../log/log.h"
 
+//前向声明
 class util_timer;
 
+//用户信息：客户端地址，socket文件描述符，定时器
 struct client_data
 {
     sockaddr_in address;
@@ -33,18 +35,24 @@ struct client_data
     util_timer *timer;
 };
 
+//定时器类
 class util_timer
 {
 public:
     util_timer() : prev(NULL), next(NULL) {}
 
 public:
+    // 任务的超时时间，这里使用绝对时间
     time_t expire;
-    
+
+    //任务回调函数
     void (* cb_func)(client_data *);
+
+    //回调函数处理的客户数据，由定时器的执行者传递给回调函数
     client_data *user_data;
-    util_timer *prev;
-    util_timer *next;
+
+    util_timer *prev; // 指向前一个定时器
+    util_timer *next; // 指向下一个定时器
 };
 
 class sort_timer_lst

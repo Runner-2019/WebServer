@@ -73,7 +73,9 @@ public:
     ~http_conn() {}
 
 public:
+
     void init(int sockfd, const sockaddr_in &addr, char *, int, int, string user, string passwd, string sqlname);
+
     void close_conn(bool real_close = true);
     void process();
     bool read_once();
@@ -82,6 +84,7 @@ public:
     {
         return &m_address;
     }
+
     void initmysql_result(connection_pool *connPool);
     int timer_flag;
     int improv;

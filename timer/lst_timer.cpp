@@ -1,11 +1,14 @@
 #include "lst_timer.h"
 #include "../http/http_conn.h"
 
+// 初始化
 sort_timer_lst::sort_timer_lst()
 {
     head = NULL;
     tail = NULL;
 }
+
+//链表被销毁时，删除其中所有的定时器
 sort_timer_lst::~sort_timer_lst()
 {
     util_timer *tmp = head;
@@ -17,6 +20,7 @@ sort_timer_lst::~sort_timer_lst()
     }
 }
 
+//将目标定时器timer添加到链表中
 void sort_timer_lst::add_timer(util_timer *timer)
 {
     if (!timer)
@@ -28,6 +32,10 @@ void sort_timer_lst::add_timer(util_timer *timer)
         head = tail = timer;
         return;
     }
+    //如果目标定时器的超时时间小于当前链表中的所有定时器的超时时间，
+    //则把该定时器插入链表头部，作为新的链表节点
+    //否则就用重载函数add_timer(util_timer* timer,util_timer* lst_head)
+    //把它插入链表中的合适位置，以保证链表的升序特性
     if (timer->expire < head->expire)
     {
         timer->next = head;
@@ -37,6 +45,10 @@ void sort_timer_lst::add_timer(util_timer *timer)
     }
     add_timer(timer, head);
 }
+
+//  当某个定时任务发生变化时，调整对应的定时器在链表中的位置
+// 这个函数只考虑被调整的定时器的超时时间延长的情况
+// 即该定时器需要往链表的尾部移动
 void sort_timer_lst::adjust_timer(util_timer *timer)
 {
     if (!timer)
@@ -44,10 +56,12 @@ void sort_timer_lst::adjust_timer(util_timer *timer)
         return;
     }
     util_timer *tmp = timer->next;
+    /*如果被调整的定时器处在链表尾部，或者该定时器的超时值仍然小于下一个定时器的超时值，则不需要调整*/
     if (!tmp || (timer->expire < tmp->expire))
     {
         return;
     }
+    // 如果目标定时器是链表的头节点，则将该定时器从链表中取出并重新插入链表
     if (timer == head)
     {
         head = head->next;
@@ -55,6 +69,8 @@ void sort_timer_lst::adjust_timer(util_timer *timer)
         timer->next = NULL;
         add_timer(timer, head);
     }
+    //如果目标定时器不是链表的头节点，则将该定时器从链表中取出，然后插入
+    //其原来所在位置之后的部分链表中
     else
     {
         timer->prev->next = timer->next;
@@ -62,12 +78,15 @@ void sort_timer_lst::adjust_timer(util_timer *timer)
         add_timer(timer, timer->next);
     }
 }
+
+//将目标定时器timer从链表中删除
 void sort_timer_lst::del_timer(util_timer *timer)
 {
     if (!timer)
     {
         return;
     }
+    //链表中只有一个定时器，即目标定时器
     if ((timer == head) && (timer == tail))
     {
         delete timer;
@@ -75,6 +94,9 @@ void sort_timer_lst::del_timer(util_timer *timer)
         tail = NULL;
         return;
     }
+    //链表中至少有两个定时器，且目标定时器是链表的头节点
+    //则将链表的头节点重置为原头节点的下一个节点
+    //然后删除目标定时器
     if (timer == head)
     {
         head = head->next;
@@ -82,6 +104,9 @@ void sort_timer_lst::del_timer(util_timer *timer)
         delete timer;
         return;
     }
+    //链表中至少有两个定时器，且目标定时器是链表的尾节点
+    //则将链表的头节点重置为原头节点的前一个节点
+    //然后删除目标定时器
     if (timer == tail)
     {
         tail = tail->prev;
@@ -89,26 +114,36 @@ void sort_timer_lst::del_timer(util_timer *timer)
         delete timer;
         return;
     }
+    //如果目标定时器位于链表的中间，则把它前后的定时器串联起来，然后删除目标定时器
     timer->prev->next = timer->next;
     timer->next->prev = timer->prev;
     delete timer;
 }
+
+//SIGALRM 信号每次触发，都在其信号处理函数，统一事件源就是主函数中执行一次tick函数
+//以处理链表上到期的任务
 void sort_timer_lst::tick()
 {
     if (!head)
     {
         return;
     }
-    
+    //当前时间
     time_t cur = time(NULL);
     util_timer *tmp = head;
+    //定时器核心逻辑
+    //从头到尾依次处理每个定时器节点，直到遇到第一个尚未到期的定时器
     while (tmp)
     {
+        //当前时间小于到期时间，未超时
+        //注意时间是绝对时间
         if (cur < tmp->expire)
         {
             break;
         }
+        //调用回调，可以向客户发送FIN之类的断联信息
         tmp->cb_func(tmp->user_data);
+        //执行完回调后，删除，重置头节点
         head = tmp->next;
         if (head)
         {
@@ -118,7 +153,8 @@ void sort_timer_lst::tick()
         tmp = head;
     }
 }
-
+//一个重载的辅助函数
+//将timer添加到lst_head之后的部分链表中
 void sort_timer_lst::add_timer(util_timer *timer, util_timer *lst_head)
 {
     util_timer *prev = lst_head;
@@ -136,6 +172,7 @@ void sort_timer_lst::add_timer(util_timer *timer, util_timer *lst_head)
         prev = tmp;
         tmp = tmp->next;
     }
+    //超时时间最大，放到链表尾部
     if (!tmp)
     {
         prev->next = timer;
@@ -201,7 +238,9 @@ void Utils::addsig(int sig, void(handler)(int), bool restart)
 //定时处理任务，重新定时以不断触发SIGALRM信号
 void Utils::timer_handler()
 {
+    //定时处理任务，实际上是调用trick函数
     m_timer_lst.tick();
+    //一次alarm调用只会触发一次SIGALRM信号，所以重新定时
     alarm(m_TIMESLOT);
 }
 
