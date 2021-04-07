@@ -141,11 +141,11 @@ void Log::write_log(int level, const char *format, ...)
 
     m_mutex.unlock();
 
-    if (m_is_async && !m_log_queue->full())
+    if (m_is_async && !m_log_queue->full()) // 异步
     {
         m_log_queue->push(log_str);
     }
-    else
+    else    // 同步直接写
     {
         m_mutex.lock();
         fputs(log_str.c_str(), m_fp);

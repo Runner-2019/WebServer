@@ -1,22 +1,19 @@
-#include <cstdio>
-
-
-
-int main(int argc, char** argv)
+void WebServer::timer(int connfd, struct sockaddr_in client_address)
 {
-    pid_t pid;
-    int i = 0;
-    for(i; i < 3; ++i)
-    {
-        if((pid = fork()) == 0)
-        {
-            print("I am child process, my pid is: %ld\n", (unsigned long)pid);
-            return;
-        }
-        else
-            print("I am father process, my pid is: %ld\n", (unsigned long)getpid());
-    }
+    users[connfd].init(connfd,....);
+
+    users_timer[connfd].sockfd = connfd;
+    users_timer[connfd].address = clinet_addrs;
+
+    util_timer timer = new util_timer;
+    users_timer[connfd].timer = &timer;
+
+    timer_t cur = time(0);
+    timer->expires = cur + 3 * timeslot;
+    timer->
 
 
-    return 0;
+
 }
+
+

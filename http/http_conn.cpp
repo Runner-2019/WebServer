@@ -14,8 +14,8 @@ const char *error_404_form = "The requested file was not found on this server.\n
 const char *error_500_title = "Internal Error";
 const char *error_500_form = "There was an unusual problem serving the request file.\n";
 
-locker m_lock;
-map <string, string> users;
+locker m_lock; // /？？
+map <string, string> users; //一个连接对应users的一个表项，所以我们可以把它调整为http类的静态成员，而不是这样孤零零的放在这里
 
 void http_conn::initmysql_result(connection_pool *connPool) {
     //先从连接池中取一个连接
@@ -74,7 +74,8 @@ void removefd(int epollfd, int fd) {
     close(fd);
 }
 
-//将事件重置为EPOLLONESHOT
+// 将事件重置为EPOLLONESHOT
+// 发送完响应体后，可以设置为读，没法玩，设置为继续发
 void modfd(int epollfd, int fd, int ev, int TRIGMode) {
     epoll_event event;
     event.data.fd = fd;
@@ -101,8 +102,15 @@ void http_conn::close_conn(bool real_close) {
 }
 
 //初始化连接,外部调用初始化套接字地址
-void http_conn::init(int sockfd, const sockaddr_in &addr, char *root, int TRIGMode,
-                     int close_log, string user, string passwd, string sqlname) {
+void http_conn::init(int sockfd,                    // 用于与客户通信的已连接描述符(m_connfd)
+                     const sockaddr_in &addr,       // 客户地址
+                     char *root,                    // 网站根目录
+                     int TRIGMode,                  // ET == 0, LT == 1， connfd的触发模式
+                     int close_log,                 // 是否关闭log
+                     string user,                   // 用户名
+                     string passwd,                 // 密码
+                     string sqlname                 // 数据库的名称
+                     ) {
     m_sockfd = sockfd;
     m_address = addr;
 
@@ -211,7 +219,8 @@ bool http_conn::read_once() {
 
         return true;
     }
-        //ET读数据
+
+    //ET读数据
     else {
         while (true) {
             bytes_read = recv(m_sockfd, m_read_buf + m_read_idx, READ_BUFFER_SIZE - m_read_idx, 0);

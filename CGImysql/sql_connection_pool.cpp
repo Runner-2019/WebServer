@@ -53,6 +53,8 @@ void connection_pool::init(string url, string User, string PassWord, string DBNa
 		++m_FreeConn;
 	}
 
+	// sem为我们封装的信号量的类
+	// 以下表示构造一个信号量，其值为m_FreeConn
 	reserve = sem(m_FreeConn);
 
 	m_MaxConn = m_FreeConn;

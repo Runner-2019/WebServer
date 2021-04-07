@@ -3,17 +3,19 @@
 WebServer::WebServer()
 {
     //http_conn类对象
+    // 一个客户一个http对象，但是我们提前构造好，等着连接
     users = new http_conn[MAX_FD];
 
     //root文件夹路径
     char server_path[200];
-    getcwd(server_path, 200);
-    char root[6] = "/root";
+    getcwd(server_path, 200);   // 获得当前的路径
+    char root[6] = "/root";     // 配上路径，后期会更改
     m_root = (char *)malloc(strlen(server_path) + strlen(root) + 1);
     strcpy(m_root, server_path);
     strcat(m_root, root);
 
-    //定时器
+    // 定时器
+    // 定时器也提前设置好，全部用空间换时间
     users_timer = new client_data[MAX_FD];
 }
 
@@ -46,6 +48,7 @@ void WebServer::init(int port, string user, string passWord, string databaseName
 
 void WebServer::trig_mode()
 {
+    // 采取位运算
     //LT + LT
     if (0 == m_TRIGMode)
     {
@@ -74,10 +77,10 @@ void WebServer::trig_mode()
 
 void WebServer::log_write()
 {
-    if (0 == m_close_log)
+    if (0 == m_close_log) // 启用log
     {
         //初始化日志
-        if (1 == m_log_write)
+        if (1 == m_log_write) // 同步写
             Log::get_instance()->init("./ServerLog", m_close_log, 2000, 800000, 800);
         else
             Log::get_instance()->init("./ServerLog", m_close_log, 2000, 800000, 0);
@@ -86,7 +89,7 @@ void WebServer::log_write()
 
 void WebServer::sql_pool()
 {
-    //初始化数据库连接池
+    //初始化 数据库 连接池
     m_connPool = connection_pool::GetInstance();
     m_connPool->init("localhost", m_user, m_passWord, m_databaseName, 3306, m_sql_num, m_close_log);
 
@@ -162,8 +165,11 @@ void WebServer::timer(int connfd, struct sockaddr_in client_address)
 {
     users[connfd].init(connfd, client_address, m_root, m_CONNTrigmode, m_close_log, m_user, m_passWord, m_databaseName);
 
-    //初始化client_data数据
-    //创建定时器，设置回调函数和超时时间，绑定用户数据，将定时器添加到链表中
+    // 初始化client_data数据
+    // users_timer == new client_data[max_fd];
+    // 创建定时器，设置回调函数和超时时间，绑定用户数据，将定时器添加到链表中
+    // client_data 有个指针指向了它的容器 util_timer, util_timer也有个指针指向了client_data
+    // util_timer的容器是链表
     users_timer[connfd].address = client_address;
     users_timer[connfd].sockfd = connfd;
     util_timer *timer = new util_timer;
@@ -401,7 +407,7 @@ void WebServer::eventLoop()
             }
             else if (events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR))
             {
-                //服务器端关闭连接，移除对应的定时器
+                //若有异常，服务器端关闭连接，移除对应的定时器
                 util_timer *timer = users_timer[sockfd].timer;
                 deal_timer(timer, sockfd);
             }

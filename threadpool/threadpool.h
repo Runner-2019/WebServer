@@ -19,18 +19,21 @@ public:
     bool append_p(T *request);
 
 private:
-    /*工作线程运行的函数，它不断从工作队列中取出任务并执行之*/
+    /*工作线程运行的包装函数，它不断从工作队列中取出任务并调用run执行之*/
+    // WARNING: must be static
     static void *worker(void *arg);
+
+    // 工作线程的实际运行函数
     void run();
 
 private:
     int m_thread_number;        //线程池中的线程数
     int m_max_requests;         //请求队列中允许的最大请求数
     pthread_t *m_threads;       //描述线程池的数组，其大小为m_thread_number
-    std::list<T *> m_workqueue; //请求队列
+    std::list<T *> m_workqueue; //与IO处理单元交互的请求队列
     locker m_queuelocker;       //保护请求队列的互斥锁
     sem m_queuestat;            //是否有任务需要处理
-    connection_pool *m_connPool;  //数据库
+    connection_pool *m_connPool;  //数据库，这里与存储单元交互
     int m_actor_model;          //模型切换
 };
 template <typename T>
@@ -63,13 +66,14 @@ threadpool<T>::~threadpool()
 template <typename T>
 bool threadpool<T>::append(T *request, int state)
 {
+    // 请求队列的相关操作
     m_queuelocker.lock();
     if (m_workqueue.size() >= m_max_requests)
     {
         m_queuelocker.unlock();
         return false;
     }
-    request->m_state = state;
+    request->m_state = state; // 读写状态，0 == 读，1 == 写
     m_workqueue.push_back(request);
     m_queuelocker.unlock();
     m_queuestat.post();
@@ -96,6 +100,7 @@ void *threadpool<T>::worker(void *arg)
     pool->run();
     return pool;
 }
+
 template <typename T>
 void threadpool<T>::run()
 {
