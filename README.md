@@ -87,20 +87,7 @@ Demo演示
 
 更新日志
 -------
-- [x] 解决请求服务器上大文件的Bug
-- [x] 增加请求视频文件的页面
-- [x] 解决数据库同步校验内存泄漏
-- [x] 实现非阻塞模式下的ET和LT触发，并完成压力测试
-- [x] 完善`lock.h`中的封装类，统一使用该同步机制
-- [x] 改进代码结构，更新局部变量懒汉单例模式
-- [x] 优化数据库连接池信号量与代码结构
-- [x] 使用RAII机制优化数据库连接的获取与释放
-- [x] 优化代码结构，封装工具类以减少全局变量
-- [x] 编译一次即可，命令行进行个性化测试更加友好
-- [x] main函数封装重构
-- [x] 新增命令行日志开关，关闭日志后更新压力测试结果
-- [x] 改进编译方式，只配置一次SQL信息即可
-- [x] 新增Reactor模式，并完成压力测试
+- [x] 不用更新,没有bug
 
 源码下载
 -------
@@ -117,6 +104,7 @@ Demo演示
 快速运行
 ------------
 * 服务器测试环境
+    * Docker ，根据项目DockerFile构建 
 	* Ubuntu版本16.04
 	* MySQL版本5.7.29
 * 浏览器测试环境
@@ -155,6 +143,10 @@ Demo演示
 
     ```C++
     sh ./build.sh
+    ```
+  or：
+	```c++
+	make server
     ```
 
 * 启动server
@@ -219,7 +211,7 @@ Demo演示
 
 庖丁解牛
 ------------
-近期版本迭代较快，以下内容多以旧版本(raw_version)代码为蓝本进行详解.
+社长的讲解：
 
 * [小白视角：一文读懂社长的TinyWebServer](https://huixxi.github.io/2020/06/02/%E5%B0%8F%E7%99%BD%E8%A7%86%E8%A7%92%EF%BC%9A%E4%B8%80%E6%96%87%E8%AF%BB%E6%87%82%E7%A4%BE%E9%95%BF%E7%9A%84TinyWebServer/#more)
 * [最新版Web服务器项目详解 - 01 线程同步机制封装类](https://mp.weixin.qq.com/s?__biz=MzAxNzU2MzcwMw==&mid=2649274278&idx=3&sn=5840ff698e3f963c7855d702e842ec47&chksm=83ffbefeb48837e86fed9754986bca6db364a6fe2e2923549a378e8e5dec6e3cf732cdb198e2&scene=0&xtrack=1#rd)
@@ -243,6 +235,8 @@ CPP11实现
 
 致谢
 ------------
+社长，提供了原始模板
+
 Linux高性能服务器编程，游双著.
 
 感谢以下朋友的PR和帮助: [@RownH](https://github.com/RownH)，[@mapleFU](https://github.com/mapleFU)，[@ZWiley](https://github.com/ZWiley)，[@zjuHong](https://github.com/zjuHong)，[@mamil](https://github.com/mamil)，[@byfate](https://github.com/byfate)，[@MaJun827](https://github.com/MaJun827)，[@BBLiu-coder](https://github.com/BBLiu-coder)，[@smoky96](https://github.com/smoky96)，[@yfBong](https://github.com/yfBong)，[@liuwuyao](https://github.com/liuwuyao)，[@Huixxi](https://github.com/Huixxi)，[@markparticle](https://github.com/markparticle).
