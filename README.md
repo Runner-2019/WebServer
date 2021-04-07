@@ -208,7 +208,7 @@ CPP11实现
 
 致谢
 ------------
-大力致谢@qinguoyi，提供了原始模板,给了细致的讲解
+大力致谢[@qinguoyi](https://github.com/qinguoyi)，提供了原始模板,给了细致的讲解
 
 Linux高性能服务器编程，游双著.
 
